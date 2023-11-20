@@ -2,12 +2,12 @@
   "name": "ONT",
   "version": "1.0.0",
   "description": "A program that can capture network traffic of given interface and provide the data for analyzing",
-  "main": "src/index.ts",
-  "author": "Niko <niko.huuskonen.00@gmail.com>",
+  "main": "index.ts",
+  "author": "Niko Huuskonen <niko.huuskonen.00@gmail.com>",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node index.ts"
   },
   "dependencies": {
     "pcap": "^3.1.0",

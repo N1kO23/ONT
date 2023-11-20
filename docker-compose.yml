@@ -1,1 +1,12 @@
 version: "3"
+services:
+  network-analyser:
+    image: network-analyser:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - INTERFACE
+    privileged: true
+    network_mode: host
+    restart: no
