@@ -20,4 +20,4 @@ RUN pip3 install --no-cache --upgrade pip setuptools
 RUN yarn
 
 # Set the default command to run your application in development mode
-CMD ["yarn", "run", "dev"]
+CMD ["yarn", "run", "dockerdev"]

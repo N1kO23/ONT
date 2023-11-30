@@ -7,9 +7,12 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "ts-node index.ts"
+    "dockerdev": "ts-node index.ts",
+    "dev": "ts-node src/index.ts",
+    "test": "echo not yet"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
     "pcap": "^3.1.0",
     "typescript": "^5.2.2"
   },

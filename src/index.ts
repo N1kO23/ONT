@@ -1,7 +1,12 @@
 import * as pcap from "pcap";
 import * as os from "os";
+import { config } from "dotenv";
 
 import { SessionError } from "./misc/errors";
+import { decodeEthernetPacket } from "./decoders/ethernetFrame";
+import { decodeNetworkPacket } from "./decoders/networkPacket";
+
+config();
 
 const networkInterfaces = os.networkInterfaces();
 
@@ -17,7 +22,7 @@ if (!process.env.INTERFACE) {
   throw new SessionError("Network interface must be specified!");
 }
 const session = pcap.createSession(process.env.INTERFACE); // TODO: add a fallback default interface
-console.log("Session opened");
+console.log("PCAP session opened");
 
 tcp_tracker.on("session", (session: any) => {
   console.log(
@@ -35,7 +40,12 @@ tcp_tracker.on("session", (session: any) => {
 
 session.on("packet", (raw) => {
   const decodedPacket = pcap.decode.packet(raw);
-  console.log(raw);
+  // console.log(raw);
+  const frame = decodeEthernetPacket(raw.buf);
+  const networkPackage = decodeNetworkPacket(frame.payload);
+
+  console.log(frame);
+  console.log(networkPackage);
 
   // console.log("dst host", decodedPacket.payload.dhost.addr);
   // console.log("src host", decodedPacket.payload.shost.addr);
