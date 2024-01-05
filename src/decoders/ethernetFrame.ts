@@ -1,17 +1,23 @@
 import { EthernetFrame } from "../misc/frameTypes";
 
 function decodeEthernetPacket(buf: Buffer): EthernetFrame {
-  if (buf.length < 14) {
+  if (buf.length <= 14) {
     throw new Error("Invalid Ethernet frame");
   }
 
   // The offset acts as a pointer to where we are decoding from
   let offset = 0;
 
-  const macDestination = buf.slice(offset, offset + 6).toString("hex");
+  const macDestination = buf
+    .slice(offset, offset + 6)
+    .toString("hex")
+    .replace(/(.{2})(?=.)/g, "$1:");
   offset += 6;
 
-  const macSource = buf.slice(offset, offset + 6).toString("hex");
+  const macSource = buf
+    .slice(offset, offset + 6)
+    .toString("hex")
+    .replace(/(.{2})(?=.)/g, "$1:");
   offset += 6;
 
   // Check if the frame contains VLAN tag
