@@ -11,10 +11,10 @@ interface EthernetFrame {
 }
 
 interface InternetPackage {
-  version: string;
-  totalLength: string;
+  version: NetworkProtocol;
+  totalLength: number;
   protocol: IPProtocol;
-  ttl: string;
+  ttl: number;
   ipSource: string;
   ipDestination: string;
   options: string;
@@ -22,8 +22,8 @@ interface InternetPackage {
 }
 
 enum NetworkProtocol {
-  "IPv4",
-  "IPv6",
+  IPv4 = 4,
+  IPv6 = 6,
 }
 
 enum IPProtocol {
@@ -31,4 +31,4 @@ enum IPProtocol {
   UDP = 17,
 }
 
-export { EthernetFrame, InternetPackage, IPProtocol };
+export { EthernetFrame, NetworkProtocol, InternetPackage, IPProtocol };

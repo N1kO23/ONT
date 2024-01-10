@@ -1,4 +1,8 @@
-import { IPProtocol, InternetPackage } from "../misc/frameTypes";
+import {
+  IPProtocol,
+  InternetPackage,
+  NetworkProtocol,
+} from "../misc/frameTypes";
 
 function decodeNetworkPacket(buf: Buffer): InternetPackage {
   if (buf.length < 20) {
@@ -8,15 +12,17 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   // The offset acts as a pointer to where we are decoding from
   let offset = 0;
 
-  const version = buf.slice(offset, offset + 1).toString("hex"); // @FIXME: Should be 4 bits instead of byte
+  // Extracting version (first 4 bits)
+  const version = (buf.readUInt8(offset) >> 4) & 0x0f;
+  if (version == NetworkProtocol.IPv4) offset += 2;
+  else offset += 4;
+
+  const totalLength = buf.readUInt16BE(offset); // @FIXME: Should be 4 bits instead of byte
   offset += 2;
 
-  const totalLength = buf.slice(offset, offset + 2).toString("hex"); // @FIXME: Should be 4 bits instead of byte
-  offset += 2;
+  if (version == NetworkProtocol.IPv4) offset += 4; // Skip the 4 bytes of IP header data
 
-  offset += 4; // Skip the 4 bytes of IP header data
-
-  const ttl = buf.slice(offset, offset + 1).toString("hex");
+  const ttl = buf.readUInt8(offset);
   offset += 1;
 
   const protocol = Number.parseInt(
@@ -25,10 +31,10 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   );
   offset += 3;
 
-  const ipSource = buf.slice(offset, offset + 4).toString("hex");
+  const ipSource = parseIP(buf.slice(offset, offset + 4).toString("hex"));
   offset += 4;
 
-  const ipDestination = buf.slice(offset, offset + 4).toString("hex");
+  const ipDestination = parseIP(buf.slice(offset, offset + 4).toString("hex"));
   offset += 4;
 
   const options = buf.slice(offset, offset + 40).toString("hex");
@@ -48,6 +54,20 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   };
 
   return internetPackage;
+}
+
+function parseIP(ip: string) {
+  const pairs = ip.match(/.{1,2}/g);
+
+  if (pairs) {
+    // Convert each pair from hexadecimal to decimal
+    const decimalValues = pairs.map((pair) => parseInt(pair, 16));
+
+    // Join the decimal values to form the IP address string
+    const ipAddress = decimalValues.join(".");
+    return ipAddress;
+  }
+  throw new Error("Invalid IP address: " + ip);
 }
 
 export { decodeNetworkPacket };
