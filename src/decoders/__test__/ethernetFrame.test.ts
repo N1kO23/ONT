@@ -36,7 +36,7 @@ describe("Ethernet frame decoder", () => {
   it("Can read VLAN data", () => {
     const frame = generateFakeEthernetFrameBuffer({
       ethernetType: "8100",
-      vlanData: "BD34",
+      vlanData: "BD34", // 1011110100110100
     });
     const parsed = decodeEthernetPacket(frame);
 
@@ -47,6 +47,19 @@ describe("Ethernet frame decoder", () => {
     };
 
     expect(parsed.vlanTag).toEqual(expected);
+  });
+
+  it("Can extract payload", () => {
+    const payload = "Hello World!";
+
+    const frame = generateFakeEthernetFrameBuffer({
+      payload,
+    });
+    const parsed = decodeEthernetPacket(frame);
+
+    const expected = Buffer.from(payload, "utf8");
+
+    expect(parsed.payload).toEqual(expected);
   });
 
   it("Throws error on invalid ethernet frame", () => {

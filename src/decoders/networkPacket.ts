@@ -14,31 +14,53 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
 
   // Extracting version (first 4 bits)
   const version = (buf.readUInt8(offset) >> 4) & 0x0f;
+
+  // if (buf.length > 60 && version == NetworkProtocol.IPv4) {
+  //   throw new Error("Invalid IPv4 packet");
+  // } else if (buf.length != 60 && version == NetworkProtocol.IPv6) {
+  //   throw new Error("Invalid IPv6 packet");
+  // }
+
   if (version == NetworkProtocol.IPv4) offset += 2;
   else offset += 4;
 
-  const totalLength = buf.readUInt16BE(offset); // @FIXME: Should be 4 bits instead of byte
+  const totalLength =
+    version == NetworkProtocol.IPv4
+      ? buf.readUInt16BE(offset)
+      : buf.readUInt16BE(offset);
   offset += 2;
 
   if (version == NetworkProtocol.IPv4) offset += 4; // Skip the 4 bytes of IP header data
 
-  const ttl = buf.readUInt8(offset);
+  const ttl =
+    version == NetworkProtocol.IPv4 ? buf.readUInt8(offset) : buf.readUInt8(8); // IPv6 TTL is 9th byte in the header;
   offset += 1;
 
-  const protocol = Number.parseInt(
-    buf.slice(offset, offset + 1).toString("hex"),
-    16
-  );
-  offset += 3;
+  const protocol =
+    version == NetworkProtocol.IPv4
+      ? (buf.readUInt8(offset) as IPProtocol)
+      : (buf.readUInt8(6) as IPProtocol); // IPv6 proto is 7th byte in the header;
+  offset += version == NetworkProtocol.IPv4 ? 3 : 1;
 
-  const ipSource = parseIP(buf.slice(offset, offset + 4).toString("hex"));
-  offset += 4;
+  const ipSource =
+    version == NetworkProtocol.IPv4
+      ? parseIPv4(buf.slice(offset, offset + 4).toString("hex"))
+      : parseIPv6(buf.slice(offset, offset + 16).toString("hex"));
+  offset += version == NetworkProtocol.IPv4 ? 4 : 16;
 
-  const ipDestination = parseIP(buf.slice(offset, offset + 4).toString("hex"));
-  offset += 4;
+  const ipDestination =
+    version == NetworkProtocol.IPv4
+      ? parseIPv4(buf.slice(offset, offset + 4).toString("hex"))
+      : parseIPv6(buf.slice(offset, offset + 16).toString("hex"));
+  offset += version == NetworkProtocol.IPv4 ? 4 : 16;
 
-  const options = buf.slice(offset, offset + 40).toString("hex");
-  offset += 40;
+  const options =
+    version == NetworkProtocol.IPv4
+      ? buf.slice(offset, offset + 40).toString("hex")
+      : undefined;
+  if (version == NetworkProtocol.IPv4) {
+    offset += 40;
+  }
 
   const payload = buf.slice(offset);
 
@@ -56,7 +78,7 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   return internetPackage;
 }
 
-function parseIP(ip: string) {
+function parseIPv4(ip: string) {
   const pairs = ip.match(/.{1,2}/g);
 
   if (pairs) {
@@ -68,6 +90,26 @@ function parseIP(ip: string) {
     return ipAddress;
   }
   throw new Error("Invalid IP address: " + ip);
+}
+
+function parseIPv6(ip: string) {
+  const groups = ip.match(/.{1,4}/g);
+
+  if (groups && groups.length === 8) {
+    // Convert each group from hexadecimal to decimal
+    const decimalValues = groups.map((group) => parseInt(group, 16));
+
+    // Format each decimal value as a hexadecimal string with leading zeros
+    const hexStrings = decimalValues.map((value) =>
+      value.toString(16).padStart(4, "0")
+    );
+
+    // Join the hexadecimal strings to form the IPv6 address string
+    const ipAddress = hexStrings.join(":");
+    return ipAddress;
+  }
+
+  throw new Error("Invalid IPv6 address: " + ip);
 }
 
 export { decodeNetworkPacket };
