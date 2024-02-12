@@ -12,6 +12,7 @@ interface EthernetFrame {
 
 interface InternetPackage {
   version: NetworkProtocol;
+  ihl?: number;
   totalLength: number;
   protocol: IPProtocol;
   ttl: number;
@@ -22,8 +23,12 @@ interface InternetPackage {
 }
 
 enum NetworkProtocol {
+  IPPrev4 = 0,
   IPv4 = 4,
+  IST = 5,
   IPv6 = 6,
+  TPIX = 7,
+  IPv9 = 9,
 }
 
 enum IPProtocol {

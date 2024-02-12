@@ -41,11 +41,15 @@ tcp_tracker.on("session", (session: any) => {
 session.on("packet", (raw) => {
   // const decodedPacket = pcap.decode.packet(raw);
   // console.log(raw);
-  const frame = decodeEthernetPacket(raw.buf);
-  const networkPackage = decodeNetworkPacket(frame.payload);
+  try {
+    const frame = decodeEthernetPacket(raw.buf);
+    const networkPackage = decodeNetworkPacket(frame.payload);
 
-  // console.log(frame);
-  console.log(networkPackage);
+    // console.log(frame);
+    console.log(networkPackage);
+  } catch (error) {
+    console.error(error);
+  }
 
   // console.log("decoded", decodedPacket);
   // console.log("src host", decodedPacket.payload.shost.addr);

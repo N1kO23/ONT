@@ -14,6 +14,8 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
 
   // Extracting version (first 4 bits)
   const version = (buf.readUInt8(offset) >> 4) & 0x0f;
+  // Extracting the header length
+  const ihl = buf.readUInt8(offset) & 0x0f;
 
   // if (buf.length > 60 && version == NetworkProtocol.IPv4) {
   //   throw new Error("Invalid IPv4 packet");
@@ -21,8 +23,13 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   //   throw new Error("Invalid IPv6 packet");
   // }
 
-  if (version == NetworkProtocol.IPv4) offset += 2;
-  else offset += 4;
+  if (version == NetworkProtocol.IPv4) {
+    offset += 2;
+  } else if (version == NetworkProtocol.IPv6) {
+    offset += 4;
+  } else {
+    throw new Error("Invalid Internet packet version: " + version);
+  }
 
   const totalLength =
     version == NetworkProtocol.IPv4
@@ -55,17 +62,18 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   offset += version == NetworkProtocol.IPv4 ? 4 : 16;
 
   const options =
-    version == NetworkProtocol.IPv4
-      ? buf.slice(offset, offset + 40).toString("hex")
+    version == NetworkProtocol.IPv4 && ihl > 5
+      ? buf.slice(offset, offset + (ihl - 5) * 4).toString("hex")
       : undefined;
   if (version == NetworkProtocol.IPv4) {
-    offset += 40;
+    offset += (ihl - 5) * 4;
   }
 
   const payload = buf.slice(offset);
 
   const internetPackage: InternetPackage = {
     version,
+    ihl,
     totalLength,
     ttl,
     protocol,
