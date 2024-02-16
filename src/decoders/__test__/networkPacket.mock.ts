@@ -26,13 +26,13 @@ function generatePseudoRandomBytes(length: number): string {
   return hexString;
 }
 
-function createHeaderByte(version: number, ihl: number): string {
-  version &= 0x0f;
-  ihl &= 0x0f;
+function combineToByte(first: number, second: number): string {
+  first &= 0x0f;
+  second &= 0x0f;
 
-  const headerByte = (version << 4) | ihl;
+  const combinedByte = (first << 4) | second;
 
-  return headerByte.toString(16);
+  return combinedByte.toString(16);
 }
 
 function generateFakeNetworkPacket(opts: NetworkGeneratorOptions): Buffer {
@@ -75,66 +75,97 @@ function generateFakeNetworkPacket(opts: NetworkGeneratorOptions): Buffer {
   };
 
   // Header length
-  const headerLength = options
-    ? Buffer.from(options).length / 4
-    : ihl ?? getRandomNumber(5, 15);
+  const headerLength =
+    version === 4
+      ? options
+        ? Buffer.from(options).length / 4
+        : ihl ?? getRandomNumber(5, 15)
+      : 10;
 
   // Header options
-  const headerOptions = options
-    ? Buffer.from(options, "hex")
-    : Buffer.from(generatePseudoRandomBytes((headerLength - 5) * 4), "hex");
+  const headerOptions =
+    version === 4
+      ? options
+        ? Buffer.from(options, "hex")
+        : Buffer.from(generatePseudoRandomBytes((headerLength - 5) * 4), "hex")
+      : undefined;
 
   const headerTtl = ttl ?? getRandomNumber(0, 255);
   const headerProtocol = protocol ?? getRandomNumber(0, 255);
 
   // Packet IPs
   const sourceIP =
-    ipSource?.split(".").map((octet) => Number.parseInt(octet)) ??
+    (version === 4
+      ? ipSource?.split(".").map((octet) => Number.parseInt(octet))
+      : ipSource?.split(":").map((octet) => Number.parseInt("0x" + octet))) ??
     generateRandomIP(version);
   const destIP =
-    ipDestination?.split(".").map((octet) => Number.parseInt(octet)) ??
+    (version === 4
+      ? ipDestination?.split(".").map((octet) => Number.parseInt(octet))
+      : ipDestination
+          ?.split(":")
+          .map((octet) => Number.parseInt("0x" + octet))) ??
     generateRandomIP(version);
 
   // Payload envelope
   const IPPayload = Buffer.from(payload ?? "SamplePayload", "utf8");
 
-  const packetBuffer = Buffer.alloc(
-    IPPayload.length + (version === 4 ? headerLength * 4 : 40)
-  );
+  const packetBuffer = Buffer.alloc(IPPayload.length + headerLength * 4);
 
-  // Version & IHL
-  packetBuffer.write(createHeaderByte(version, headerLength), 0, 1, "hex");
+  // Version & IHL, IPv6 doesn't have IHL but the traffic class is not supported yet so it wont be a problem
+  packetBuffer.write(combineToByte(version, headerLength), 0, 1, "hex");
   // Filler
-  packetBuffer.write(generatePseudoRandomBytes(1), 1, 1, "hex");
+  let fillerAmount = version === 4 ? 1 : 3;
+  packetBuffer.write(
+    generatePseudoRandomBytes(fillerAmount),
+    1,
+    fillerAmount,
+    "hex"
+  );
   // Total length
   packetBuffer.write(
     packetBuffer.length.toString(16).padStart(4, "0"),
-    2,
+    version === 4 ? 2 : 4,
     2,
     "hex"
   );
   // Filler
-  packetBuffer.write(generatePseudoRandomBytes(4), 4, 4, "hex");
-  // TTL
-  packetBuffer.write(headerTtl.toString(16).padStart(2, "0"), 8, 1, "hex");
+  version === 4 &&
+    packetBuffer.write(generatePseudoRandomBytes(4), 4, 4, "hex");
+  // TTL, 8th byte on both versions
+  packetBuffer.write(
+    headerTtl.toString(16).padStart(2, "0"),
+    version === 4 ? 8 : 7,
+    1,
+    "hex"
+  );
   // Protocol
-  packetBuffer.write(headerProtocol.toString(16).padStart(2, "0"), 9, 1, "hex");
+  packetBuffer.write(
+    headerProtocol.toString(16).padStart(2, "0"),
+    version === 4 ? 9 : 6,
+    1,
+    "hex"
+  );
   // Source IP
   packetBuffer.write(
-    sourceIP.map((byte) => byte.toString(16).padStart(2, "0")).join(""),
-    12,
-    4,
+    sourceIP
+      .map((byte) => byte.toString(16).padStart(version === 4 ? 2 : 4, "0"))
+      .join(""),
+    version === 4 ? 12 : 8,
+    version === 4 ? 4 : 16,
     "hex"
   );
   // Destination IP
   packetBuffer.write(
-    destIP.map((byte) => byte.toString(16).padStart(2, "0")).join(""),
-    16,
-    4,
+    destIP
+      .map((byte) => byte.toString(16).padStart(version === 4 ? 2 : 4, "0"))
+      .join(""),
+    version === 4 ? 16 : 24,
+    version === 4 ? 4 : 16,
     "hex"
   );
   // Options
-  headerOptions.copy(packetBuffer, 20);
+  headerOptions?.copy(packetBuffer, 20);
   // Payload
   IPPayload.copy(packetBuffer, headerLength * 4);
 

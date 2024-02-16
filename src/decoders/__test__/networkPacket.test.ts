@@ -4,55 +4,59 @@ import { generateFakeNetworkPacket } from "./networkPacket.mock";
 
 describe("Network packet decoder", () => {
   it("Can parse TTL on IPv4", () => {
-    const TTL = 123;
+    const ttl = 123;
+    const version = 4;
 
-    const packet = generateFakeNetworkPacket({ version: 4, ttl: TTL });
+    const packet = generateFakeNetworkPacket({ version, ttl });
 
     const parsed = decodeNetworkPacket(packet);
 
-    expect(parsed.version).toEqual(4);
-    expect(parsed.ttl).toEqual(TTL);
+    expect(parsed.version).toEqual(version);
+    expect(parsed.ttl).toEqual(ttl);
   });
 
   it("Can parse protocol on IPv4", () => {
     const protocol = 6;
+    const version = 4;
 
     const packet = generateFakeNetworkPacket({
-      version: 4,
+      version,
       protocol,
     });
 
     const parsed = decodeNetworkPacket(packet);
 
-    expect(parsed.version).toEqual(4);
+    expect(parsed.version).toEqual(version);
     expect(parsed.protocol).toEqual(protocol);
   });
 
   it("Can parse source IP on IPv4", () => {
     const ipSource = "192.168.1.123";
+    const version = 4;
 
     const packet = generateFakeNetworkPacket({
-      version: 4,
+      version,
       ipSource,
     });
 
     const parsed = decodeNetworkPacket(packet);
 
-    expect(parsed.version).toEqual(4);
+    expect(parsed.version).toEqual(version);
     expect(parsed.ipSource).toEqual(ipSource);
   });
 
   it("Can parse destination IP on IPv4", () => {
     const ipDestination = "192.168.1.123";
+    const version = 4;
 
     const packet = generateFakeNetworkPacket({
-      version: 4,
+      version,
       ipDestination,
     });
 
     const parsed = decodeNetworkPacket(packet);
 
-    expect(parsed.version).toEqual(4);
+    expect(parsed.version).toEqual(version);
     expect(parsed.ipDestination).toEqual(ipDestination);
   });
 
@@ -60,9 +64,10 @@ describe("Network packet decoder", () => {
 
   it("Can extract payload on IPv4", () => {
     const payload = "Hello, world!";
+    const version = 4;
 
     const packet = generateFakeNetworkPacket({
-      version: 4,
+      version,
       payload,
     });
 
@@ -70,19 +75,74 @@ describe("Network packet decoder", () => {
 
     const expected = Buffer.from(payload, "utf8");
 
-    expect(parsed.version).toEqual(4);
+    expect(parsed.version).toEqual(version);
     expect(parsed.payload).toEqual(expected);
   });
 
-  it("Can parse TTL on IPv6", () => {});
+  it("Can parse TTL on IPv6", () => {
+    const ttl = 123;
+    const version = 6;
 
-  it("Can parse protocol on IPv6", () => {});
+    const packet = generateFakeNetworkPacket({ version, ttl });
 
-  it("Can parse source IP on IPv6", () => {});
+    const parsed = decodeNetworkPacket(packet);
 
-  it("Can parse destination IP on IPv6", () => {});
+    expect(parsed.version).toEqual(version);
+    expect(parsed.ttl).toEqual(ttl);
+  });
 
-  it("Can extract payload on IPv6", () => {});
+  it("Can parse protocol on IPv6", () => {
+    const protocol = 6;
+    const version = 6;
+
+    const packet = generateFakeNetworkPacket({ version, protocol });
+
+    const parsed = decodeNetworkPacket(packet);
+
+    expect(parsed.version).toEqual(version);
+    expect(parsed.protocol).toEqual(protocol);
+  });
+
+  it("Can parse source IP on IPv6", () => {
+    const ipSource = "2001:0999:0289:0076:6cdc:3ac3:a92f:b4b6";
+    const version = 6;
+
+    const packet = generateFakeNetworkPacket({ version, ipSource });
+
+    const parsed = decodeNetworkPacket(packet);
+
+    expect(parsed.version).toEqual(version);
+    expect(parsed.ipSource).toEqual(ipSource);
+  });
+
+  it("Can parse destination IP on IPv6", () => {
+    const ipDestination = "2001:0999:0289:0076:6cdc:3ac3:a92f:b4b6";
+    const version = 6;
+
+    const packet = generateFakeNetworkPacket({ version, ipDestination });
+
+    const parsed = decodeNetworkPacket(packet);
+
+    expect(parsed.version).toEqual(version);
+    expect(parsed.ipDestination).toEqual(ipDestination);
+  });
+
+  it("Can extract payload on IPv6", () => {
+    const payload = "Hello, world!";
+    const version = 6;
+
+    const packet = generateFakeNetworkPacket({
+      version,
+      payload,
+    });
+
+    const parsed = decodeNetworkPacket(packet);
+
+    const expected = Buffer.from(payload, "utf8");
+
+    expect(parsed.version).toEqual(version);
+    expect(parsed.payload).toEqual(expected);
+  });
 
   it("Throws error on if network package version is invalid", () => {
     const frame = generateFakeNetworkPacket({

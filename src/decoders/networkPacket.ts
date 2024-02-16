@@ -40,7 +40,7 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   if (version == NetworkProtocol.IPv4) offset += 4; // Skip the 4 bytes of IP header data
 
   const ttl =
-    version == NetworkProtocol.IPv4 ? buf.readUInt8(offset) : buf.readUInt8(8); // IPv6 TTL is 9th byte in the header;
+    version == NetworkProtocol.IPv4 ? buf.readUInt8(offset) : buf.readUInt8(7); // IPv6 TTL is 7th byte in the header;
   offset += 1;
 
   const protocol =
