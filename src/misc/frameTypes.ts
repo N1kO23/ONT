@@ -7,7 +7,7 @@ interface EthernetFrame {
     vlanId: number;
   };
   etherType: string;
-  payload: Buffer;
+  payload?: Buffer;
 }
 
 interface InternetPackage {
@@ -19,7 +19,7 @@ interface InternetPackage {
   ipSource: string;
   ipDestination: string;
   options?: string;
-  payload: Buffer;
+  payload?: Buffer;
 }
 
 enum NetworkProtocol {
