@@ -1,13 +1,15 @@
 interface EthernetFrame {
   macDestination: string;
   macSource: string;
-  vlanTag?: {
-    priority: number;
-    cfi: number;
-    vlanId: number;
-  };
-  etherType: string;
+  vlanTag?: VlanTag;
+  etherType: EtherType;
   payload?: Buffer;
+}
+
+interface VlanTag {
+  priority: number;
+  cfi: number;
+  vlanId: number;
 }
 
 interface InternetPackage {
@@ -181,4 +183,42 @@ enum IPProtocol {
   RESERVED = 255,
 }
 
-export { EthernetFrame, NetworkProtocol, InternetPackage, IPProtocol };
+enum EtherType {
+  VLAN = "8100",
+  IPv4 = "0800",
+  IPv6 = "86dd",
+  ARP = "0806",
+  WOL = "0842",
+  CDP = "2000",
+  SRP = "22ea",
+  AVTP = "22f0",
+  RARP = "8035",
+  EtherTalk = "809b",
+  AARP = "80f3",
+  SLPP = "8102",
+  VLACP = "8103",
+  IPX = "8137",
+  ETHERNET_FLOW_CONTROL = "8808",
+  MPLS_UNICAST = "8847",
+  MPLS_MULTICAST = "8848",
+  PPPoE_DISCOVERY = "8863",
+  PPPoE_SESSION = "8864",
+  HyperSCSI = "889a",
+  LLDP = "88cc",
+  MACSEC = "88e5",
+  PRP = "88fb",
+  FCoE = "8906",
+  FCoE_INIT = "8914",
+  RoCE = "8915",
+  TTE = "891d",
+  HSR = "892f",
+  ECTP = "9000",
+}
+
+export {
+  EthernetFrame,
+  NetworkProtocol,
+  InternetPackage,
+  IPProtocol,
+  EtherType,
+};

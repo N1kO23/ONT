@@ -1,4 +1,4 @@
-import { EthernetFrame } from "../misc/frameTypes";
+import { EtherType, EthernetFrame } from "../misc/frameTypes";
 
 function decodeEthernetPacket(buf: Buffer): EthernetFrame {
   if (buf.length <= 14) {
@@ -21,14 +21,14 @@ function decodeEthernetPacket(buf: Buffer): EthernetFrame {
   offset += 6;
 
   // Check if the frame contains VLAN tag
-  let etherType = buf.slice(offset, offset + 2).toString("hex");
+  let etherType = buf.slice(offset, offset + 2).toString("hex") as EtherType;
   offset += 2;
   const tagNumeric = buf.readUInt16BE(offset); // Read the VLAN tag
-  const tagData = etherType === "8100" && parseVLAN(tagNumeric);
+  const tagData = etherType === EtherType.VLAN && parseVLAN(tagNumeric);
   if (tagData) {
     offset += 2;
     // Now we have gone over the VLAN tag, so we read the ethernet frame type
-    etherType = buf.slice(offset, offset + 2).toString("hex");
+    etherType = buf.slice(offset, offset + 2).toString("hex") as EtherType;
     offset += 2;
   }
 
