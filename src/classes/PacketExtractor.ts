@@ -2,7 +2,7 @@ import * as pcap from "pcap";
 import { SessionError } from "../misc/errors";
 import { decodeNetworkPacket } from "../decoders/networkPacket";
 import { decodeEthernetPacket } from "../decoders/ethernetFrame";
-import { EthernetFrame, InternetPackage } from "../misc/frameTypes";
+import { EtherType, EthernetFrame, InternetPackage } from "../misc/frameTypes";
 import { PacketExtractorEvents, TCPSession } from "../misc/genericTypes";
 
 type ExtractorOptions = {
@@ -87,12 +87,16 @@ export default class PacketExtractor<Event extends keyof EventMap> {
         // Extract the ethernet frame
         const frame = decodeEthernetPacket(raw.buf);
         // Extract the internet package
-        const networkPackage = decodeNetworkPacket(frame.payload!);
+        const networkPackage =
+          frame.etherType === EtherType.IPv4 ||
+          frame.etherType === EtherType.IPv6
+            ? decodeNetworkPacket(frame.payload!)
+            : undefined;
 
         // Redact payloads if true
         if (this._redactPayloads) {
           frame.payload = undefined;
-          networkPackage.payload = undefined;
+          networkPackage && (networkPackage.payload = undefined);
         }
 
         this.emit(
@@ -100,10 +104,12 @@ export default class PacketExtractor<Event extends keyof EventMap> {
           frame
         );
 
-        this.emit(
-          PacketExtractorEvents.NETWORKPACKAGE as EventMap[Event],
-          networkPackage
-        );
+        if (networkPackage) {
+          this.emit(
+            PacketExtractorEvents.NETWORKPACKAGE as EventMap[Event],
+            networkPackage
+          );
+        }
 
         // If tracking TCP sessions
         if (this._isTcpTrackerEnabled) {
