@@ -35,7 +35,7 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   const totalLength =
     version == NetworkProtocol.IPv4
       ? buf.readUInt16BE(offset)
-      : buf.readUInt16BE(offset);
+      : buf.readUInt16BE(offset) + 40;
   offset += 2;
 
   if (version == NetworkProtocol.IPv4) offset += 4; // Skip the 4 bytes of IP header data
