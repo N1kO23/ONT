@@ -15,7 +15,8 @@ function decodeNetworkPacket(buf: Buffer): InternetPackage {
   // Extracting version (first 4 bits)
   const version = (buf.readUInt8(offset) >> 4) & 0x0f;
   // Extracting the header length
-  const ihl = buf.readUInt8(offset) & 0x0f;
+  const ihl =
+    version == NetworkProtocol.IPv4 ? buf.readUInt8(offset) & 0x0f : 40;
 
   // if (buf.length > 60 && version == NetworkProtocol.IPv4) {
   //   throw new Error("Invalid IPv4 packet");
