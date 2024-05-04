@@ -4,7 +4,22 @@ type EthernetGeneratorOptions = {
   ethernetType?: string;
   vlanData?: string;
   payload?: string;
+  crc?: string;
 };
+
+function generatePseudoRandomBytes(length: number): string {
+  const randomBytes = new Uint8Array(length);
+
+  for (let i = 0; i < length; i++) {
+    randomBytes[i] = Math.floor(Math.random() * 256);
+  }
+
+  const hexString = Array.from(randomBytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+
+  return hexString;
+}
 
 function generateFakeEthernetFrameBuffer(
   options: EthernetGeneratorOptions
@@ -16,6 +31,7 @@ function generateFakeEthernetFrameBuffer(
     ethernetType,
     vlanData,
     payload,
+    crc,
   } = options;
 
   // Generates a random MAC address and returns it
@@ -42,15 +58,24 @@ function generateFakeEthernetFrameBuffer(
   // Payload envelope
   const ethernetPayload = Buffer.from(payload ?? "SamplePayload", "utf8");
 
+  // Create random 4 bit data for 32-bit CRC
+  const finalCrc = crc ?? generatePseudoRandomBytes(4);
+
   // Putting it all together
   const frameBuffer = Buffer.alloc(
-    (vlanData ? 16 : 14) + ethernetPayload.length
+    (vlanData ? 16 : 14) + ethernetPayload.length + 4
   );
   frameBuffer.write(destinationMAC.split(":").join(""), 0, 6, "hex");
   frameBuffer.write(sourceMAC.split(":").join(""), 6, 6, "hex");
   frameBuffer.write(ethernetType ?? etherType.substr(2), 12, 2, "hex");
   vlanData && frameBuffer.write(vlanData, 14, 2, "hex");
   ethernetPayload.copy(frameBuffer, vlanData ? 16 : 14);
+  frameBuffer.write(
+    finalCrc,
+    frameBuffer.length - 4,
+    frameBuffer.length,
+    "hex"
+  );
 
   return frameBuffer;
 }

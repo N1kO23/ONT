@@ -32,7 +32,7 @@ function decodeEthernetPacket(buf: Buffer): EthernetFrame {
     offset += 2;
   }
 
-  const payload = buf.slice(offset);
+  const payload = buf.slice(offset, buf.length - 4);
 
   const ethernetFrame: EthernetFrame = {
     macDestination,

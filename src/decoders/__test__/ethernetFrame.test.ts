@@ -69,6 +69,10 @@ describe("Ethernet frame decoder", () => {
       payload: "",
     });
 
-    expect(() => decodeEthernetPacket(frame)).toThrow("Invalid Ethernet frame");
+    const brokenFrame = frame.slice(10);
+
+    expect(() => decodeEthernetPacket(brokenFrame)).toThrow(
+      "Invalid Ethernet frame"
+    );
   });
 });
